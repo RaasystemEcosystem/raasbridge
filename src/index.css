@@ -1,9 +1,12 @@
-/* index.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Optional: Add any global styles */
+/* Custom global styles */
 body {
-  @apply bg-gray-50 text-gray-900;
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background-color: #f9fafb;
+  color: #111827;
+
 }
