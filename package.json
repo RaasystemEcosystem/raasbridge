@@ -1,0 +1,27 @@
+{
+  "name": "raasbridge-ui",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "framer-motion": "^11.0.0",
+    "react-chartjs-2": "^5.2.0",
+    "chart.js": "^4.4.1",
+    "@emotion/react": "^11.11.3",
+    "@emotion/styled": "^11.11.0",
+    "@emotion/is-prop-valid": "^1.2.2"
+  },
+  "devDependencies": {
+    "vite": "^6.3.6",
+    "tailwindcss": "^3.4.3",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38"
+  }
+}
