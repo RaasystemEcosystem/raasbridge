@@ -12,6 +12,8 @@ import {
   Tooltip,
   Legend
 } from "chart.js";
+import RaasBridgeDiagram from "../components/RaasBridgeDiagram.jsx";
+import RaasBridgeConnectivity from "../components/RaasBridgeConnectivity.jsx";
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
@@ -23,67 +25,119 @@ const moduleLinks = [
 ];
 
 const initialMetrics = [
-  { title: "Total Balance", value: "125,340 $RBT" },
-  { title: "Open Positions", value: "5" },
-  { title: "PnL Today", value: "+36 $RBT" },
-  { title: "Trading Volume", value: "37,500 $RBT" }
+  { title: "Total Balance", value: 125_340 }, // $RBT
+  { title: "Open Positions", value: 5 },
+  { title: "PnL Today", value: 5 }, // $RKN
+  { title: "Trading Volume", value: 37_500 }
 ];
 
-const mockChartData = {
-  labels: Array.from({ length: 10 }, (_, i) => `T-${10 - i}`),
-  datasets: [
-    {
-      label: "RBT Price",
-      data: [100, 102, 101, 105, 107, 110, 108, 112, 115, 118],
-      borderColor: "#FFD700",
-      backgroundColor: "rgba(255, 215, 0, 0.2)",
-      tension: 0.3
-    }
-  ]
-};
-
-const chartOptions = {
-  animation: { duration: 1000, easing: "easeOutQuart" },
-  plugins: {
-    legend: { labels: { color: "#FFD700" } },
-    tooltip: { enabled: true }
-  },
-  scales: {
-    x: { ticks: { color: "#FFD700" }, grid: { color: "#333" } },
-    y: { ticks: { color: "#FFD700" }, grid: { color: "#333" } }
-  }
-};
+const initialActivities = [
+  { text: "Swap executed: RAAS → USDC", minutesAgo: 2 },
+  { text: "Raaspay settlement initiated", minutesAgo: 5 },
+  { text: "New tokenized asset minted", minutesAgo: 12 }
+];
 
 export default function RaasBridgeDashboard() {
   const [collapsed, setCollapsed] = useState(false);
   const [active, setActive] = useState("overview");
   const [metrics, setMetrics] = useState(initialMetrics);
+  const [chartData, setChartData] = useState({
+    labels: Array.from({ length: 10 }, (_, i) => `T-${10 - i}`),
+    datasets: [
+      {
+        label: "RBT Price",
+        data: Array(10).fill(100),
+        borderColor: "#FFD700",
+        backgroundColor: "rgba(255, 215, 0, 0.2)",
+        tension: 0.3
+      }
+    ]
+  });
+  const [activities, setActivities] = useState(initialActivities);
+  const [flows, setFlows] = useState([]);
+  const [aiStatus, setAiStatus] = useState("Active"); // RaasGenAI status
 
+  // Dynamic updates
   useEffect(() => {
     const interval = setInterval(() => {
+      // Metrics
       setMetrics(prev =>
         prev.map(m => {
-          if (m.title.includes("PnL")) {
-            const change = (Math.random() * 100 - 50).toFixed(0);
-            return { ...m, value: `+${change} $RKN` };
+          if (m.title === "PnL Today") {
+            const change = (Math.random() * 10 - 5).toFixed(2);
+            return { ...m, value: parseFloat(change) };
+          }
+          if (m.title === "Total Balance") {
+            const change = (Math.random() * 500 + 125_000).toFixed(0);
+            return { ...m, value: parseFloat(change) };
           }
           return m;
         })
       );
-    }, 5000);
+
+      // Chart
+      setChartData(prev => {
+        const newData = [...prev.datasets[0].data];
+        newData.push(newData[newData.length - 1] + (Math.random() * 4 - 2));
+        if (newData.length > 10) newData.shift();
+
+        const newLabels = [...prev.labels];
+        newLabels.push(`T-${newLabels.length}`);
+        if (newLabels.length > 10) newLabels.shift();
+
+        return {
+          ...prev,
+          labels: newLabels,
+          datasets: [{ ...prev.datasets[0], data: newData }]
+        };
+      });
+
+      // Token flows
+      setFlows([
+        {
+          startLat: Math.random() * 80 - 40,
+          startLng: Math.random() * 180 - 90,
+          endLat: Math.random() * 80 - 40,
+          endLng: Math.random() * 180 - 90,
+          color: "yellow"
+        },
+        {
+          startLat: Math.random() * 80 - 40,
+          startLng: Math.random() * 180 - 90,
+          endLat: Math.random() * 80 - 40,
+          endLng: Math.random() * 180 - 90,
+          color: "goldenrod"
+        },
+        {
+          startLat: Math.random() * 80 - 40,
+          startLng: Math.random() * 180 - 90,
+          endLat: Math.random() * 80 - 40,
+          endLng: Math.random() * 180 - 90,
+          color: "orange"
+        }
+      ]);
+
+      // Activities
+      const actions = [
+        "Swap executed: RAAS → RBT",
+        "RBT → USDC executed",
+        "New tokenized asset minted",
+        "Liquidity synced",
+        "RaasGenAI prediction run"
+      ];
+      const newActivity = { text: actions[Math.floor(Math.random() * actions.length)], minutesAgo: 0 };
+
+      setActivities(prev => {
+        const updated = [newActivity, ...prev].slice(0, 6);
+        return updated.map(a => ({ ...a, minutesAgo: a.minutesAgo + 1 }));
+      });
+    }, 7000);
+
     return () => clearInterval(interval);
   }, []);
 
-  const navItems = [
-    { key: "overview", label: "Dashboard Overview" },
-    { key: "raasgenai", label: "RaasGenAI Console" },
-    { key: "rabex", label: "RABEX (Trading Hub)" },
-    { key: "raaspay", label: "Raaspay & Settlement" },
-    { key: "wallets", label: "Wallet Balances" },
-    { key: "rwassets", label: "RaasFarm / RWA" },
-    { key: "reports", label: "AI Reports & Insights" },
-    { key: "settings", label: "Settings / Integrations" }
-  ];
+  const raasValue = metrics.find(m => m.title === "Total Balance")?.value || 0;
+  const rbtValue = metrics.find(m => m.title === "PnL Today")?.value || 0;
 
   const Card = ({ title, value }) => (
     <motion.div
@@ -97,6 +151,36 @@ export default function RaasBridgeDashboard() {
     </motion.div>
   );
 
+  const chartOptions = {
+    animation: { duration: 1000, easing: "easeOutQuart" },
+    plugins: {
+      legend: { labels: { color: "#FFD700" } },
+      tooltip: {
+        enabled: true,
+        callbacks: {
+          label: function (context) {
+            return `RBT: ${context.raw.toFixed(2)} | $RBT: ${raasValue.toLocaleString()}`;
+          }
+        }
+      }
+    },
+    scales: {
+      x: { ticks: { color: "#FFD700" }, grid: { color: "#333" } },
+      y: { ticks: { color: "#FFD700" }, grid: { color: "#333" } }
+    }
+  };
+
+  const navItems = [
+    { key: "overview", label: "Dashboard Overview" },
+    { key: "raasgenai", label: "RaasGenAI Console" },
+    { key: "rabex", label: "RABEX (Trading Hub)" },
+    { key: "raaspay", label: "Raaspay & Settlement" },
+    { key: "wallets", label: "Wallet Balances" },
+    { key: "rwassets", label: "RaasFarm / RWA" },
+    { key: "reports", label: "AI Reports & Insights" },
+    { key: "settings", label: "Settings / Integrations" }
+  ];
+
   return (
     <div className="min-h-screen bg-black text-white antialiased flex">
       {/* Sidebar */}
@@ -105,22 +189,18 @@ export default function RaasBridgeDashboard() {
           <div className="w-8 h-8 rounded-md bg-yellow-400" />
           {!collapsed && <div className="text-xl font-bold text-yellow-400">RaasBridge</div>}
         </div>
-
         <nav className="flex-1 px-2 py-3 space-y-1 overflow-auto">
           {navItems.map(item => (
             <button
               key={item.key}
               onClick={() => setActive(item.key)}
-              className={`w-full flex items-center gap-3 text-left py-2 px-3 rounded-md hover:bg-white/5 transition-colors ${
-                active === item.key ? "bg-white/5" : ""
-              }`}
+              className={`w-full flex items-center gap-3 text-left py-2 px-3 rounded-md hover:bg-white/5 transition-colors ${active === item.key ? "bg-white/5" : ""}`}
             >
               <div className="w-6 h-6 rounded-sm bg-gradient-to-tr from-yellow-400 to-yellow-300" />
               {!collapsed && <span className="flex-1">{item.label}</span>}
             </button>
           ))}
         </nav>
-
         <div className="p-3">
           <button
             onClick={() => setCollapsed(!collapsed)}
@@ -142,89 +222,91 @@ export default function RaasBridgeDashboard() {
             <div className="text-2xl font-bold text-yellow-400">RaasBridge</div>
             <div className="text-sm text-gray-400">Unified Dashboard</div>
           </div>
-
           <div className="flex items-center gap-3">
+            {/* Search */}
             <div className="hidden md:flex items-center bg-white/5 rounded-md px-3 py-2 gap-2">
-              <input
-                className="bg-transparent outline-none text-sm text-white placeholder:text-gray-500"
-                placeholder="Search assets, txns, users..."
-              />
+              <input className="bg-transparent outline-none text-sm text-white placeholder:text-gray-500" placeholder="Search assets, txns, users..." />
               <button className="text-sm px-2 py-1 rounded-md bg-yellow-400 text-black font-semibold">Search</button>
             </div>
-
-            <div className="flex items-center gap-3">
-              <div className="text-sm text-gray-400">
-                RaasGenAI: <span className="text-green-400 font-semibold">Active</span>
-              </div>
-              <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">U</div>
+            {/* RaasGenAI Status */}
+            <div className="flex items-center gap-2 bg-green-600/80 px-3 py-1 rounded-md text-white font-semibold text-sm">
+              RaasGenAI: {aiStatus}
+            </div>
+            {/* Profile */}
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-yellow-400" />
             </div>
           </div>
         </header>
 
-        {/* Page Body */}
-        <main className="p-6 flex-1 overflow-auto">
-          <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
-            {/* Top Metrics */}
-            <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              {metrics.map(m => <Card key={m.title} title={m.title} value={m.value} />)}
-            </section>
+        <main className="p-6 flex-1 overflow-auto space-y-6">
+          {/* Top Metrics */}
+          <section className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {metrics.map(m => <Card key={m.title} title={m.title} value={m.value} />)}
+          </section>
 
-            {/* Modules & AI Panel */}
-            <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-              <div className="lg:col-span-1 flex flex-col gap-6">
-                <div className="bg-black/80 border border-yellow-400 rounded-xl p-5 shadow-[0_0_20px_rgba(255,215,0,0.3)]">
-                  <h3 className="text-yellow-400 font-semibold">RaasGenAI Command Panel</h3>
-                  <p className="text-gray-300 mt-2">Quick actions to instruct the AI orchestrator.</p>
-                  <div className="mt-4 flex flex-col gap-3">
-                    {["Optimize Markets","Sync Liquidity","Run Prediction","Arbitrage Scan"].map((action, idx) => (
-                      <motion.button
-                        key={idx}
-                        whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(255,215,0,0.7)" }}
-                        whileTap={{ scale: 0.95 }}
-                        className="py-2 rounded-md bg-yellow-400 text-black font-semibold"
-                      >
-                        {action}
-                      </motion.button>
-                    ))}
-                  </div>
-                </div>
+          {/* RaasGenAI Command Panel */}
+<section className="bg-black/80 border border-yellow-400 rounded-xl p-5 shadow-[0_0_20px_rgba(255,215,0,0.3)] mb-6">
+  <h3 className="text-yellow-400 font-semibold mb-2 text-lg">RaasGenAI Command Panel</h3>
+  <p className="text-gray-900 mb-4 text-sm">Quick actions to instruct the AI orchestrator.</p>
+  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+    {["Optimize Markets", "Sync Liquidity", "Run Prediction", "Arbitrage Scan"].map(cmd => (
+      <motion.button
+        key={cmd}
+        whileHover={{ scale: 1.03 }}
+        className="bg-yellow-400 text-black font-semibold rounded-xl px-4 py-3 shadow-[0_0_15px_rgba(255,215,0,0.5)] hover:bg-yellow-300 transition-colors"
+      >
+        {cmd}
+      </motion.button>
+    ))}
+  </div>
+</section>
 
-                {/* Modules */}
-                <div className="bg-black/80 border border-yellow-400 rounded-xl p-5 shadow-[0_0_20px_rgba(255,215,0,0.3)]">
-                  <h3 className="text-yellow-400 font-semibold">Modules</h3>
-                  <div className="mt-4 flex flex-col gap-2">
-                    {moduleLinks.map(m => (
-                      <a key={m.name} href={m.url} className="py-2 px-3 rounded-md bg-white/5 hover:bg-white/10 text-yellow-400 font-semibold block">
-                        {m.name}
-                      </a>
-                    ))}
-                  </div>
-                </div>
+          {/* Modules & Market + Globe */}
+          <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-1 flex flex-col gap-6">
+              {moduleLinks.map(link => (
+                <motion.a
+                  key={link.name}
+                  href={link.url}
+                  whileHover={{ scale: 1.02 }}
+                  className="block bg-black/80 border border-yellow-400 rounded-xl p-4 text-yellow-400 font-semibold shadow-[0_0_20px_rgba(255,215,0,0.3)] hover:bg-white/5 transition-colors"
+                >
+                  {link.name}
+                </motion.a>
+              ))}
+            </div>
+
+            <div className="lg:col-span-2 flex flex-col gap-6">
+              {/* Market Chart */}
+              <div className="bg-black/80 border border-yellow-400 rounded-xl p-5 shadow-[0_0_20px_rgba(255,215,0,0.3)]">
+                <h3 className="text-yellow-400 font-semibold mb-4">Market Activity</h3>
+                <Line data={chartData} options={chartOptions} />
               </div>
 
-              {/* Charts & Network Visual */}
-              <div className="lg:col-span-2 flex flex-col gap-6">
-                <div className="bg-black/80 border border-yellow-400 rounded-xl p-5 shadow-[0_0_20px_rgba(255,215,0,0.3)]">
-                  <h3 className="text-yellow-400 font-semibold mb-4">Market Activity</h3>
-                  <Line data={mockChartData} options={chartOptions} />
-                </div>
-
-                <div className="bg-black/80 border border-yellow-400 rounded-xl p-5 h-96 flex items-center justify-center text-gray-400">
-                  [3D Globe / Map placeholder — react-globe.gl / three.js]
-                </div>
+              <div className="lg:col-span-2">
+                <RaasBridgeConnectivity />
               </div>
-            </section>
 
-            {/* Recent Activity */}
-            <section className="bg-black/80 border border-yellow-400 rounded-xl p-5 shadow-[0_0_20px_rgba(255,215,0,0.3)]">
-              <h3 className="text-yellow-400 font-semibold mb-2">Recent Activity</h3>
-              <ul className="text-gray-300 list-disc list-inside space-y-1">
-                <li>Swap executed: RAAS → USDC — 2m ago</li>
-                <li>Raaspay settlement initiated — 5m ago</li>
-                <li>New tokenized asset minted — 12m ago</li>
-              </ul>
-            </section>
-          </motion.div>
+
+            </div>
+          </section>
+
+          {/* Token Economy Diagram */}
+          <section className="mt-10">
+            <h3 className="text-yellow-400 font-semibold mb-4 text-xl">RaasBridge Token Economy</h3>
+            <RaasBridgeDiagram raasValue={raasValue} rbtValue={rbtValue} />
+          </section>
+
+          {/* Recent Activity */}
+          <section className="bg-black/80 border border-yellow-400 rounded-xl p-5 shadow-[0_0_20px_rgba(255,215,0,0.3)]">
+            <h3 className="text-yellow-400 font-semibold mb-2">Recent Activity</h3>
+            <ul className="text-gray-300 list-disc list-inside space-y-1">
+              {activities.map((act, idx) => (
+                <li key={idx}>{`${act.text} — ${act.minutesAgo}m ago`}</li>
+              ))}
+            </ul>
+          </section>
         </main>
       </div>
     </div>

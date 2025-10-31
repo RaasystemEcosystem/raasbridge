@@ -1,0 +1,28 @@
+import Globe from "react-globe.gl";
+
+export default function TokenFlowGlobe({ raasValue, rbtValue }) {
+  const [arcs, setArcs] = React.useState([]);
+
+  React.useEffect(() => {
+    // Example arcs
+    const flows = [
+      { startLat: 37, startLng: -122, endLat: 51.5, endLng: -0.1, color: "yellow" },
+      { startLat: -33.9, startLng: 151.2, endLat: 40.7, endLng: -74, color: "goldenrod" },
+    ];
+    setArcs(flows);
+  }, []);
+
+  return (
+    <Globe
+      globeImageUrl="//unpkg.com/three-globe/example/img/earth-dark.jpg" // <- adds visible globe
+      arcsData={arcs}
+      arcColor="color"
+      arcDashLength={0.5}
+      arcDashGap={0.3}
+      arcDashAnimateTime={4000}
+      arcStroke={0.8}
+      arcAltitude={0.2}
+      backgroundColor="black"
+    />
+  );
+}
