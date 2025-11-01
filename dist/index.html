@@ -2,16 +2,28 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Raaswallet</title>
-    <script type="module" crossorigin src="/raaswallet-ui/assets/index-a315799c.js"></script>
-    <link rel="modulepreload" crossorigin href="/raaswallet-ui/assets/react-8a332d8f.js">
-    <link rel="modulepreload" crossorigin href="/raaswallet-ui/assets/wallet-a293e15c.js">
-    <link rel="stylesheet" href="/raaswallet-ui/assets/index-310d5d0d.css">
+    <title>Raaspay UI</title>
+
+    <!-- Built CSS (adjust hash if changed after build) -->
+    <link rel="stylesheet" href="/raaspay-ui/assets/index-B0S8nqNt.css" crossorigin />
+
+    <!-- Built JS (adjust hash if changed after build) -->
+    <script type="module" src="/raaspay-ui/assets/index-OgeGTCuL.js" crossorigin></script>
   </head>
-  <body>
+  <body class="bg-black text-white">
     <div id="root"></div>
-    
+
+    <!-- Fallback message if JS fails -->
+    <noscript>
+      <p style="color:white; text-align:center; margin-top:20px;">
+        ⚠️ JavaScript is required to run Raaspay UI.
+      </p>
+    </noscript>
+
+    <!-- Optional: simple footer -->
+    <footer class="text-center text-sm text-gray-400 border-t border-gray-800 py-4 mt-4">
+      © 2025 Raasystem — All rights reserved.
+    </footer>
   </body>
 </html>

@@ -1,15 +1,9 @@
 import React, { useState, useEffect } from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  AreaChart,
+  ComposedChart,
   Area,
-  LineChart,
   Line,
   XAxis,
   YAxis,
@@ -18,7 +12,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-// --- Helpers for fallback simulation ---
 const randomPrice = (base = 1000, variance = 50) =>
   (base + Math.random() * variance - variance / 2).toFixed(2);
 
@@ -30,14 +23,7 @@ const generateRandomCandles = (count = 20) => {
     let close = parseFloat(randomPrice(price, 20));
     let high = Math.max(open, close) + Math.random() * 10;
     let low = Math.min(open, close) - Math.random() * 10;
-    data.push({
-      time: `T${i}`,
-      open,
-      close,
-      high,
-      low,
-      volume: Math.floor(Math.random() * 1000),
-    });
+    data.push({ time: `T${i}`, open, close, high, low, volume: Math.floor(Math.random() * 1000) });
     price = close;
   }
   return data;
@@ -45,6 +31,8 @@ const generateRandomCandles = (count = 20) => {
 
 export default function RabexPage() {
   const [selectedToken, setSelectedToken] = useState("Raaskoin");
+  const [selectedTab, setSelectedTab] = useState("Market");
+  const [selectedInterval, setSelectedInterval] = useState("1m");
   const [buyAmount, setBuyAmount] = useState("");
   const [sellAmount, setSellAmount] = useState("");
   const [orderBook, setOrderBook] = useState({ bids: [], asks: [] });
@@ -53,119 +41,59 @@ export default function RabexPage() {
   const [aiIndicators, setAiIndicators] = useState({ signal: "NEUTRAL", confidence: 0 });
   const [depthData, setDepthData] = useState([]);
 
-  // WebSocket connection + fallback simulation
   useEffect(() => {
-    let ws;
-    let simulationInterval;
-
-    try {
-      ws = new WebSocket("wss://raasystem.net/rabex-feed");
-
-      ws.onopen = () => {
-        console.log("Connected to Rabex feed");
-        ws.send(JSON.stringify({ action: "subscribe", token: selectedToken }));
+    const interval = setInterval(() => {
+      const newCandle = {
+        time: new Date().toLocaleTimeString(),
+        open: parseFloat(randomPrice(1000, 20)),
+        close: parseFloat(randomPrice(1000, 20)),
+        high: parseFloat(randomPrice(1020, 20)),
+        low: parseFloat(randomPrice(980, 20)),
+        volume: Math.floor(Math.random() * 1000),
       };
+      setCandlestickData((prev) => [...prev.slice(-19), newCandle]);
 
-      ws.onmessage = (msg) => {
-        const data = JSON.parse(msg.data);
-        if (data.type === "orderBook") {
-          setOrderBook(data.payload);
-          updateDepthChart(data.payload);
-        }
-        if (data.type === "trade")
-          setTrades((prev) => [data.payload, ...prev.slice(0, 19)]);
-        if (data.type === "candlestick")
-          setCandlestickData((prev) => [...prev.slice(-19), data.payload]);
-        if (data.type === "aiSignal") setAiIndicators(data.payload);
+      const newTrade = {
+        price: randomPrice(1000, 20),
+        amount: (Math.random() * 5).toFixed(2),
+        time: new Date().toLocaleTimeString(),
       };
+      setTrades((prev) => [newTrade, ...prev.slice(0, 19)]);
 
-      ws.onerror = () => {
-        console.warn("Rabex feed unavailable, falling back to simulation.");
-        fallbackSim();
+      const newOrderBook = {
+        bids: Array.from({ length: 5 }, () => randomPrice(1000, 20)),
+        asks: Array.from({ length: 5 }, () => randomPrice(1005, 20)),
       };
-
-      ws.onclose = () => {
-        console.log("Rabex feed closed, switching to simulation.");
-        fallbackSim();
-      };
-    } catch (err) {
-      console.error("WebSocket error:", err);
-      fallbackSim();
-    }
-
-    // --- Fallback Simulation ---
-    function fallbackSim() {
-      simulationInterval = setInterval(() => {
-        const newCandle = {
-          time: new Date().toLocaleTimeString(),
-          open: parseFloat(randomPrice(1000, 20)),
-          close: parseFloat(randomPrice(1000, 20)),
-          high: parseFloat(randomPrice(1020, 20)),
-          low: parseFloat(randomPrice(980, 20)),
-          volume: Math.floor(Math.random() * 1000),
-        };
-        setCandlestickData((prev) => [...prev.slice(-19), newCandle]);
-
-        const newTrade = {
-          price: randomPrice(1000, 20),
-          amount: (Math.random() * 5).toFixed(2),
-          time: new Date().toLocaleTimeString(),
-        };
-        setTrades((prev) => [newTrade, ...prev.slice(0, 19)]);
-
-        const newOrderBook = {
-          bids: Array.from({ length: 5 }, () => randomPrice(1000, 20)),
-          asks: Array.from({ length: 5 }, () => randomPrice(1005, 20)),
-        };
-        setOrderBook(newOrderBook);
-        updateDepthChart(newOrderBook);
-
-        setAiIndicators({
-          signal: Math.random() > 0.5 ? "BUY" : "SELL",
-          confidence: (Math.random() * 100).toFixed(1),
-        });
-      }, 2000);
-    }
-
-    // Depth chart update helper
-    function updateDepthChart(book) {
-      let bids = book.bids.map((price, i) => ({
-        price: parseFloat(price),
-        bid: (i + 1) * 10,
-      }));
-      let asks = book.asks.map((price, i) => ({
-        price: parseFloat(price),
-        ask: (i + 1) * 10,
-      }));
+      setOrderBook(newOrderBook);
+      const bids = newOrderBook.bids.map((p, i) => ({ price: parseFloat(p), bid: (i + 1) * 10 }));
+      const asks = newOrderBook.asks.map((p, i) => ({ price: parseFloat(p), ask: (i + 1) * 10 }));
       setDepthData([...bids, ...asks]);
-    }
 
-    return () => {
-      if (ws) ws.close();
-      if (simulationInterval) clearInterval(simulationInterval);
-    };
-  }, [selectedToken]);
+      setAiIndicators({
+        signal: Math.random() > 0.5 ? "BUY" : "SELL",
+        confidence: (Math.random() * 100).toFixed(1),
+      });
+    }, 2000);
 
-  // Quick % buttons for Buy/Sell
+    return () => clearInterval(interval);
+  }, []);
+
   const setPercent = (percent, type) => {
-    if (type === "buy") setBuyAmount(((percent / 100) * 1000).toFixed(2)); // Example balance
+    if (type === "buy") setBuyAmount(((percent / 100) * 1000).toFixed(2));
     else setSellAmount(((percent / 100) * 1000).toFixed(2));
   };
 
   return (
-    <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 bg-gray-900 text-gray-100 min-h-screen">
-      {/* Left Panel - Trading Actions */}
-      <div className="lg:col-span-1 space-y-6">
-        {/* Token Selector */}
-        <Card className="bg-gray-800 text-gray-100">
-          <CardHeader>
-            <CardTitle>Select Token</CardTitle>
-          </CardHeader>
+    <div className="p-4 grid grid-cols-1 lg:grid-cols-12 gap-4 font-sans min-h-screen bg-gray-900 text-white">
+      {/* Left Panel */}
+      <div className="lg:col-span-3 space-y-4">
+        <Card className="bg-gray-800 border border-yellow-400 rounded-xl shadow-md">
+          <CardHeader><CardTitle className="text-yellow-400 font-bold">Select Token</CardTitle></CardHeader>
           <CardContent>
             <select
               value={selectedToken}
               onChange={(e) => setSelectedToken(e.target.value)}
-              className="w-full p-2 border rounded-lg bg-gray-700 text-gray-100"
+              className="w-full p-2 rounded bg-gray-700 text-white border border-yellow-400"
             >
               <option>Raaskoin</option>
               <option>Raastoken</option>
@@ -175,158 +103,145 @@ export default function RabexPage() {
           </CardContent>
         </Card>
 
-        {/* Buy/Sell */}
-        <Card className="bg-gray-800 text-gray-100">
-          <CardHeader>
-            <CardTitle>Buy / Sell</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+        {/* Trading Tabs */}
+        <Card className="bg-gray-800 border border-yellow-400 rounded-xl shadow-md">
+          <CardHeader><CardTitle className="text-yellow-400 font-bold">Trading Type</CardTitle></CardHeader>
+          <CardContent className="flex space-x-2">
+            {["Market", "Limit", "Stop-Limit"].map((t) => (
+              <Button
+                key={t}
+                onClick={() => setSelectedTab(t)}
+                className={`flex-1 rounded ${selectedTab === t ? "bg-yellow-400 text-black" : "bg-gray-700 text-white"} hover:shadow-lg transition-all`}
+              >
+                {t}
+              </Button>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Buy/Sell Panel */}
+        <Card className="bg-gray-800 border border-yellow-400 rounded-xl shadow-md">
+          <CardHeader><CardTitle className="text-yellow-400 font-bold">Buy / Sell</CardTitle></CardHeader>
+          <CardContent className="space-y-2">
             <input
               type="number"
               placeholder="Buy Amount"
               value={buyAmount}
               onChange={(e) => setBuyAmount(e.target.value)}
-              className="w-full p-2 border rounded-lg bg-gray-700 text-gray-100"
+              className="w-full p-2 rounded bg-gray-700 text-white border border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400"
             />
-            <div className="flex space-x-2 mb-2">
+            <div className="flex space-x-1">
               {[25, 50, 75, 100].map((p) => (
-                <Button
-                  key={p}
-                  onClick={() => setPercent(p, "buy")}
-                  className="flex-1 bg-green-600 hover:bg-green-700"
-                >
-                  {p}%
-                </Button>
+                <Button key={p} onClick={() => setPercent(p, "buy")} className="flex-1 bg-yellow-500 text-black rounded hover:shadow-md">{p}%</Button>
               ))}
             </div>
-            <div className="flex space-x-2">
-              <Button className="flex-1 bg-green-600 hover:bg-green-700">Buy</Button>
-              <Button className="flex-1 bg-red-600 hover:bg-red-700">Sell</Button>
+            <div className="flex space-x-1">
+              <Button className="flex-1 bg-green-500 text-black rounded hover:shadow-lg transition-all">Buy</Button>
+              <Button className="flex-1 bg-red-500 text-white rounded hover:shadow-lg transition-all">Sell</Button>
             </div>
           </CardContent>
         </Card>
 
+        {/* Wallet Balances */}
+        <Card className="bg-gray-800 border border-yellow-400 rounded-xl shadow-md">
+          <CardHeader><CardTitle className="text-yellow-400 font-bold">Wallet Balances</CardTitle></CardHeader>
+          <CardContent className="space-y-1">
+            <p>Raaskoin: 500.00</p>
+            <p>Raastoken: 200.00</p>
+          </CardContent>
+        </Card>
+
         {/* AI Indicators */}
-        <Card className="bg-gray-800 text-gray-100">
-          <CardHeader>
-            <CardTitle>AI Trading Indicators</CardTitle>
-          </CardHeader>
+        <Card className="bg-gray-800 border border-yellow-400 rounded-xl shadow-md">
+          <CardHeader><CardTitle className="text-yellow-400 font-bold">AI Trading Indicators</CardTitle></CardHeader>
           <CardContent>
-            <p>
-              Signal:{" "}
-              <span
-                className={`font-bold ${
-                  aiIndicators.signal === "BUY"
-                    ? "text-green-400"
-                    : "text-red-400"
-                }`}
-              >
-                {aiIndicators.signal}
-              </span>
-            </p>
+            <p>Signal: <span className={aiIndicators.signal === "BUY" ? "text-green-400 font-bold" : "text-red-400 font-bold"}>{aiIndicators.signal}</span></p>
             <p>Confidence: {aiIndicators.confidence}%</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Middle Panel - Charts */}
-      <div className="lg:col-span-2 space-y-6">
+      {/* Middle Panel */}
+      <div className="lg:col-span-6 space-y-4">
+        <div className="flex space-x-1 mb-2">
+          {["1m","5m","15m","1h","1d"].map((intv) => (
+            <Button
+              key={intv}
+              onClick={() => setSelectedInterval(intv)}
+              className={`flex-1 rounded ${selectedInterval===intv?"bg-yellow-400 text-black":"bg-gray-700 text-white"} hover:shadow-md transition-all`}
+            >
+              {intv}
+            </Button>
+          ))}
+        </div>
+
         {/* Candlestick Chart */}
-        <Card className="bg-gray-800 text-gray-100">
-          <CardHeader>
-            <CardTitle>Market Chart</CardTitle>
-          </CardHeader>
+        <Card className="bg-gray-800 border border-yellow-400 rounded-xl shadow-md">
+          <CardHeader><CardTitle className="text-yellow-400 font-bold">Market Chart</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={candlestickData}>
+              <ComposedChart data={candlestickData}>
                 <defs>
-                  <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#4ade80" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#4ade80" stopOpacity={0} />
+                  <linearGradient id="goldGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#FFD700" stopOpacity={0.8} />
+                    <stop offset="95%" stopColor="#FFD700" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#555" />
-                <XAxis dataKey="time" stroke="#ccc" />
-                <YAxis domain={["auto", "auto"]} stroke="#ccc" />
-                <Tooltip contentStyle={{ backgroundColor: "#222", border: "none" }} />
-                <Area
-                  type="monotone"
-                  dataKey="close"
-                  stroke="#4ade80"
-                  fillOpacity={1}
-                  fill="url(#colorPrice)"
-                />
-              </AreaChart>
+                <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                <XAxis dataKey="time" stroke="#FFD700" tick={{ fill: "#fff" }} />
+                <YAxis domain={["auto","auto"]} stroke="#FFD700" tick={{ fill: "#fff" }} />
+                <Tooltip contentStyle={{ backgroundColor: "#1a1a1a", border: "1px solid #FFD700" }} labelStyle={{ color:"#FFD700" }} itemStyle={{ color:"#fff" }}/>
+                <Area type="monotone" dataKey="close" stroke="#FFD700" fillOpacity={1} fill="url(#goldGradient)" />
+              </ComposedChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
         {/* Depth Chart */}
-        <Card className="bg-gray-800 text-gray-100">
-          <CardHeader>
-            <CardTitle>Depth Chart</CardTitle>
-          </CardHeader>
+        <Card className="bg-gray-800 border border-yellow-400 rounded-xl shadow-md">
+          <CardHeader><CardTitle className="text-yellow-400 font-bold">Depth Chart</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={depthData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#555" />
-                <XAxis dataKey="price" stroke="#ccc" />
-                <YAxis stroke="#ccc" />
-                <Tooltip contentStyle={{ backgroundColor: "#222", border: "none" }} />
-                <Line
-                  type="stepAfter"
-                  dataKey="bid"
-                  stroke="#22c55e"
-                  dot={false}
-                />
-                <Line
-                  type="stepAfter"
-                  dataKey="ask"
-                  stroke="#ef4444"
-                  dot={false}
-                />
-              </LineChart>
+              <ComposedChart data={depthData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#444" />
+                <XAxis dataKey="price" stroke="#FFD700" tick={{ fill: "#fff" }} />
+                <YAxis stroke="#FFD700" tick={{ fill: "#fff" }} />
+                <Tooltip contentStyle={{ backgroundColor: "#1a1a1a", border: "1px solid #FFD700" }} labelStyle={{ color:"#FFD700" }} itemStyle={{ color:"#fff" }}/>
+                <Area type="stepAfter" dataKey="bid" stroke="#22c55e" fill="rgba(34,197,94,0.2)" />
+                <Area type="stepAfter" dataKey="ask" stroke="#ef4444" fill="rgba(239,68,68,0.2)" />
+              </ComposedChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
+      </div>
 
-        {/* Order Book + Trades */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Order Book */}
-          <Card className="bg-gray-800 text-gray-100">
-            <CardHeader>
-              <CardTitle>Order Book</CardTitle>
-            </CardHeader>
-            <CardContent className="flex justify-between">
-              <div>
-                <h4 className="font-semibold">Bids</h4>
-                {orderBook.bids.map((b, i) => (
-                  <p key={i} className="text-green-400">{b}</p>
-                ))}
-              </div>
-              <div>
-                <h4 className="font-semibold">Asks</h4>
-                {orderBook.asks.map((a, i) => (
-                  <p key={i} className="text-red-400">{a}</p>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+      {/* Right Panel */}
+      <div className="lg:col-span-3 space-y-4">
+        <Card className="bg-gray-800 border border-yellow-400 rounded-xl shadow-md">
+          <CardHeader><CardTitle className="text-yellow-400 font-bold">Order Book</CardTitle></CardHeader>
+          <CardContent className="flex justify-between">
+            <div className="space-y-1">
+              <h4 className="text-yellow-400 font-semibold">Bids</h4>
+              {orderBook.bids.map((b,i)=><p key={i} className="text-green-400 hover:bg-gray-700 px-1 rounded">{b}</p>)}
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-yellow-400 font-semibold">Asks</h4>
+              {orderBook.asks.map((a,i)=><p key={i} className="text-red-400 hover:bg-gray-700 px-1 rounded">{a}</p>)}
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Recent Trades */}
-          <Card className="bg-gray-800 text-gray-100">
-            <CardHeader>
-              <CardTitle>Recent Trades</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {trades.map((t, i) => (
-                <p key={i}>
-                  {t.amount} @ {t.price} ({t.time})
-                </p>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
+        <Card className="bg-gray-800 border border-yellow-400 rounded-xl shadow-md">
+          <CardHeader><CardTitle className="text-yellow-400 font-bold">Recent Trades</CardTitle></CardHeader>
+          <CardContent className="space-y-1">
+            {trades.map((t,i)=><p key={i} className="hover:bg-gray-700 px-1 rounded">{t.amount} @ {t.price} ({t.time})</p>)}
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gray-800 border border-yellow-400 rounded-xl shadow-md">
+          <CardHeader><CardTitle className="text-yellow-400 font-bold">My Orders</CardTitle></CardHeader>
+          <CardContent><p>No active orders</p></CardContent>
+        </Card>
       </div>
     </div>
   );

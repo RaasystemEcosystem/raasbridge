@@ -1,0 +1,46 @@
+{
+  "trade_executed": {
+    "source": "raasystem.rabex",
+    "detail-type": "Trade.Executed",
+    "detail": {
+      "pair": "RAASKOIN/USDT",
+      "side": "BUY",
+      "price": 102.33,
+      "qty": 250,
+      "orderId": "rbx-782134",
+      "accountId": "acct-123",
+      "latencyMs": 8
+    }
+  },
+  "payment_requested": {
+    "source": "raasystem.raaspay",
+    "detail-type": "Payment.Requested",
+    "detail": {
+      "paymentId": "pay-9221",
+      "fromWallet": "xdc-abc...",
+      "toWallet": "xdc-def...",
+      "amount": 150.00,
+      "currency": "USD",
+      "route": "AUTO",
+      "merchantId": "merch-55"
+    }
+  },
+  "wallet_created": {
+    "source": "raasystem.raaswallet",
+    "detail-type": "Wallet.Created",
+    "detail": {
+      "walletId": "xdc-abc...",
+      "userId": "user-77",
+      "kycLevel": "basic"
+    }
+  },
+  "goldprice_updated": {
+    "source": "raasystem.oracle",
+    "detail-type": "GoldPrice.Updated",
+    "detail": {
+      "symbol": "XAUUSD",
+      "price": 2395.17,
+      "feedLagSec": 2
+    }
+  }
+}

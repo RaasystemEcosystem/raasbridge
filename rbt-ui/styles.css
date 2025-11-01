@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global custom styles */
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #f9fafb; /* subtle light gray */
+  color: #111827; /* gray-900 */
+  margin: 0;
+  padding: 0;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

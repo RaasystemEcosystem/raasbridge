@@ -1,0 +1,130 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== Body & Global Styles ===== */
+body {
+  @apply bg-gray-50 text-black font-sans;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* ===== Card Styles ===== */
+.card {
+  @apply bg-white border border-gray-200 rounded-xl shadow-md;
+}
+
+.card-header {
+  @apply flex justify-between items-center p-3 border-b border-gray-200;
+}
+
+.card-title {
+  @apply text-gray-700 font-bold text-lg;
+}
+
+.card-content {
+  @apply p-3;
+}
+
+/* ===== Button Styles ===== */
+.btn {
+  @apply px-4 py-2 rounded font-semibold transition-all duration-200;
+}
+
+.btn-green {
+  @apply bg-green-500 text-white hover:bg-green-600 shadow-md;
+}
+
+.btn-red {
+  @apply bg-red-500 text-white hover:bg-red-600 shadow-md;
+}
+
+.btn-yellow {
+  @apply bg-yellow-400 text-black hover:bg-yellow-500 shadow-md;
+}
+
+.btn-gray {
+  @apply bg-gray-100 text-gray-700 hover:bg-gray-200 shadow-sm;
+}
+
+/* ===== Input Fields ===== */
+input[type="number"], select {
+  @apply w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400 bg-gray-50 text-black;
+}
+
+/* ===== Chart Gradient Overrides ===== */
+.chart-area-gradient {
+  stop-color: #FFD700;
+  stop-opacity: 0.8;
+}
+
+/* ===== Trading Panels ===== */
+.trading-panel {
+  @apply space-y-4;
+}
+
+/* ===== Depth Chart Styles ===== */
+.depth-chart-area-bid {
+  fill: rgba(34,197,94,0.2);
+  stroke: #22c55e;
+}
+
+.depth-chart-area-ask {
+  fill: rgba(239,68,68,0.2);
+  stroke: #ef4444;
+}
+
+/* ===== Order Book Styles ===== */
+.order-book {
+  @apply grid grid-cols-2 text-sm;
+}
+
+.order-book h4 {
+  @apply font-bold;
+}
+
+.order-book .bids {
+  @apply text-green-600;
+}
+
+.order-book .asks {
+  @apply text-red-600;
+}
+
+/* ===== Recent Trades ===== */
+.recent-trades p {
+  @apply hover:bg-gray-100 px-1 rounded transition-colors;
+}
+
+/* ===== Buy/Sell Panel ===== */
+.buy-sell-input {
+  @apply w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-yellow-400;
+}
+
+.buy-sell-percent-btn {
+  @apply flex-1 bg-gray-100 text-gray-700 rounded hover:bg-yellow-200 transition-all;
+}
+
+/* ===== AI Indicators ===== */
+.ai-indicator-buy {
+  @apply text-green-500 font-bold;
+}
+
+.ai-indicator-sell {
+  @apply text-red-500 font-bold;
+}
+
+.ai-indicator-neutral {
+  @apply text-gray-500 font-semibold;
+}
+
+/* ===== Responsive tweaks ===== */
+@media (max-width: 1024px) {
+  .lg\\:col-span-3, .lg\\:col-span-6, .lg\\:col-span-12 {
+    @apply col-span-12;
+  }
+}
