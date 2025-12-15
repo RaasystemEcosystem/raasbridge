@@ -34,7 +34,8 @@ const moduleLinks = [
   { name: "RABEX", url: "http://rabex-ui-724772066825.s3-website-us-west-2.amazonaws.com/#/dashboard" },
   { name: "Raaspay", url: "http://raaspay-ui.s3-website-us-west-2.amazonaws.com/" },
   { name: "RaasGenAI", url: "http://raasgenai-ui.s3-website-us-west-2.amazonaws.com/" },
-  { name: "RaasExplorer", url: "http://raascan-ui.s3-website-us-east-1.amazonaws.com/" }
+  { name: "RaasExplorer", url: "http://raascan-ui.s3-website-us-east-1.amazonaws.com/" },
+  { name: "🎵 Raastudio (Creators)", url: "http://raastudio-ui.s3-website-us-west-2.amazonaws.com" }
 ];
 
 export default function RaasBridgeDashboard() {
